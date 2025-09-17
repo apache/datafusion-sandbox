@@ -27,7 +27,7 @@ notifications:
   discussions: github@datafusion.apache.org
   jira_options: link label worklog
 github:
-  description: "DataFusion CI Sandbox"
+  description: "DataFusion Test Sandbox"
   homepage: https://datafusion.apache.org/
   enabled_merge_buttons:
     squash: true
