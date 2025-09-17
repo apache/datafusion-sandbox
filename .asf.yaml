@@ -28,7 +28,6 @@ notifications:
   jira_options: link label worklog
 github:
   description: "DataFusion Test Sandbox"
-  homepage: https://datafusion.apache.org/
   enabled_merge_buttons:
     squash: true
     merge: false
@@ -41,7 +40,3 @@ github:
     allow_update_branch: true
     allow_auto_merge: true
 
-# publishes the content of the `asf-site` branch to
-# https://datafusion.apache.org/
-publish:
-  whoami: asf-site
