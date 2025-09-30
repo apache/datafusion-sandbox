@@ -40,17 +40,18 @@ jobs:
   check-files:
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ steps.changed-files.outputs.any_changed != 'true' }}
+      should_skip: ${{ steps.changed-files.outputs.all == '' }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
-      - uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
+      - uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c
         id: changed-files
         with:
-          files_ignore: |
-            **.md
-            docs/**
-            .github/ISSUE_TEMPLATE/**
-            .github/pull_request_template.md
+          filter: |
+            *
+            !**.md
+            !docs/**
+            !.github/ISSUE_TEMPLATE/**
+            !.github/pull_request_template.md
 
   # Check crate compiles and base cargo check passes
   linux-build-lib:
