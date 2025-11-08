@@ -40,11 +40,12 @@ jobs:
   check-files:
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ steps.changed-files.outputs.all == '' }}
+      should_skip: ${{ steps.changed-files.outcome == 'success' && steps.changed-files.outputs.all == '' }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
       - uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c
         id: changed-files
+        continue-on-error: true
         with:
           filter: |
             *
