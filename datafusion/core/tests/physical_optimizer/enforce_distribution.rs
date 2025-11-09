@@ -141,7 +141,7 @@ impl SortRequiredExec {
             input.equivalence_properties().clone(), // Equivalence Properties
             input.output_partitioning().clone(),    // Output Partitioning
             input.pipeline_behavior(),              // Pipeline Behavior
-            input.boundedness(),                    // Boundedness
+            input.boundedness(),                    // Boundedness this is a code test
         )
     }
 }
