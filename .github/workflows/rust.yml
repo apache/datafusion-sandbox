@@ -55,21 +55,35 @@ jobs:
             .github/ISSUE_TEMPLATE/*
             .github/pull_request_template.md
         run: |
-          # For non-PR events, never skip
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "Not a PR, never skip"
+          echo "Event: ${{ github.event_name }}"
+
+          # Determine what files changed based on event type
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "PR detected, checking changed files..."
+            # Fetch the base branch to compare against
+            git fetch origin "${{ github.base_ref }}"
+            # Get changed files (comparing PR head with base branch)
+            IFS=$'\n' changed_files=($(git --no-pager diff --name-only "origin/${{ github.base_ref }}"...HEAD))
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            echo "Push detected, checking changed files..."
+            # Use github.event.before to get the commit before the push
+            # This handles multiple commits correctly
+            BEFORE_SHA="${{ github.event.before }}"
+
+            # Check if this is an initial commit (all zeros SHA)
+            if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              echo "Initial commit detected, not skipping"
+              echo "should_skip=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            # Get changed files (comparing state before push with current HEAD)
+            IFS=$'\n' changed_files=($(git --no-pager diff --name-only "$BEFORE_SHA"...HEAD))
+          else
+            echo "Event type ${{ github.event_name }}, never skip"
             echo "should_skip=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          # For PRs, check if only docs/markdown were changed
-          echo "PR detected, checking changed files..."
-
-          # Fetch the base branch to compare against
-          git fetch origin "${{ github.base_ref }}"
-
-          # Get changed files (comparing PR head with base branch)
-          IFS=$'\n' changed_files=($(git --no-pager diff --name-only "origin/${{ github.base_ref }}"...HEAD))
 
           echo "Changed files:"
           printf '%s\n' "${changed_files[@]}"
