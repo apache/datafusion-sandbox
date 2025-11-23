@@ -171,7 +171,7 @@ async fn test_max() {
 async fn test_sum() {
     let data_gen_config = baseline_config();
 
-    // Queries like SELECT sum(a), sum(distinct) FROM fuzz_table GROUP BY b
+    // Queries like SELECT sum(a), sum(distinct) FROM fuzz_table GROUP BY b. test change
     let query_builder = QueryBuilder::new()
         .with_table_name("fuzz_table")
         .with_aggregate_function("sum")
