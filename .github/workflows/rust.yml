@@ -53,6 +53,7 @@ jobs:
               - '!docs/**'
               - '!.github/ISSUE_TEMPLATE/**'
               - '!.github/pull_request_template.md'
+          predicate-quantifier: 'some'
 
   # Check crate compiles and base cargo check passes
   linux-build-lib:
