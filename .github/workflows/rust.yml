@@ -53,8 +53,7 @@ jobs:
               - '!docs/**'
               - '!.github/ISSUE_TEMPLATE/**'
               - '!.github/pull_request_template.md'
-          predicate-quantifier: 'some'
-
+          predicate-quantifier: 'every'
   # Check crate compiles and base cargo check passes
   linux-build-lib:
     name: linux build test
