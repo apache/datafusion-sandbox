@@ -48,7 +48,6 @@ jobs:
         with:
           filters: |
             code:
-              - '**'
               - '!**.md'
               - '!docs/**'
               - '!.github/ISSUE_TEMPLATE/**'
