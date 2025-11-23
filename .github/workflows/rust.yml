@@ -874,10 +874,15 @@ jobs:
              clippy,
              cargo-toml-formatting-checks,
              linux-test-datafusion-cli,
-             config-docs-check
+             config-docs-check,
+             typos
     ]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - name: Print status of required checks
+        run: |
+          echo "Statuses of required checks:"
+          echo '${{ toJSON(needs) }}' | jq '.'
       - run: echo '${{ toJSON(needs) }}' | jq -e 'all(.[]; .result == "success" or .result == "skipped")'
