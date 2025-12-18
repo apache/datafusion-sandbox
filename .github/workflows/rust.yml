@@ -825,8 +825,7 @@ jobs:
              clippy,
              cargo-toml-formatting-checks,
              linux-test-datafusion-cli,
-             config-docs-check,
-             typos
+             config-docs-check
     ]
     if: always()
     runs-on: ubuntu-latest
