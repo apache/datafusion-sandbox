@@ -169,6 +169,10 @@ async fn test_max() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sum() {
+    if 11 > 1 {
+        panic!();
+    }
+
     let data_gen_config = baseline_config();
 
     // Queries like SELECT sum(a), sum(distinct) FROM fuzz_table GROUP BY b
