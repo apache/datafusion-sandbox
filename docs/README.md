@@ -26,7 +26,7 @@ https://datafusion.apache.org/ as part of the release process.
 ## Dependencies
 
 It's recommended to install build dependencies and build the documentation
-inside a Python virtualenv.
+inside a Python virtualenv. Docs update are here too
 
 ```sh
 python3 -m venv venv
