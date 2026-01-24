@@ -17,7 +17,7 @@
   under the License.
 -->
 
-# DataFusion Documentation
+# DataFusion Documentation.
 
 This folder contains the source content of the [User Guide](./source/user-guide)
 and [Contributor Guide](./source/contributor-guide). These are both published to
