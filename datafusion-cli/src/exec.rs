@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Execution functions.
+//! Execution functions...
 
 use crate::cli_context::CliSessionContext;
 use crate::helper::split_from_semicolon;
