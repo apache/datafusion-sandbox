@@ -87,7 +87,7 @@ impl std::fmt::Display for TableType {
 ///
 /// The reason for having two separate traits is to avoid having the logical
 /// plan code be dependent on the DataFusion execution engine. Some projects use
-/// DataFusion's logical plans and have their own execution engine.
+/// DataFusion's logical plans and have their own execution engine. (1)
 ///
 /// [`TableProvider`]: https://docs.rs/datafusion/latest/datafusion/datasource/trait.TableProvider.html
 /// [`DefaultTableSource`]: https://docs.rs/datafusion/latest/datafusion/datasource/default_table_source/struct.DefaultTableSource.html
