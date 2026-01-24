@@ -83,7 +83,7 @@ impl std::fmt::Display for TableType {
 ///
 /// [`DefaultTableSource`]  to go from [`TableProvider`], to `TableSource`
 ///
-/// # Rationale
+/// # Rationale some code change
 ///
 /// The reason for having two separate traits is to avoid having the logical
 /// plan code be dependent on the DataFusion execution engine. Some projects use
