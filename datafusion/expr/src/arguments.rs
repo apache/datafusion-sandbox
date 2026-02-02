@@ -334,6 +334,7 @@ mod tests {
 
     #[test]
     fn test_mixed_positional_and_named() {
+        panic!();
         let param_names = vec!["a".to_string(), "b".to_string(), "c".to_string()];
 
         // Call with: func(1, c => 3.0, b => "hello")
