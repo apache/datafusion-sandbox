@@ -35,7 +35,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # This job checks if heavy-weight jobs can be skipped, because only doc or non-code files were changed
+  # This job checks if heavy-weight jobs can be skipped, because only doc or non-code files were changed.
   # More on this: https://github.com/orgs/community/discussions/45899
   check-files:
     runs-on: ubuntu-latest
