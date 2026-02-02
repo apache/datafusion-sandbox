@@ -21,6 +21,7 @@ concurrency:
   group: ${{ github.repository }}-${{ github.head_ref || github.sha }}-${{ github.workflow }}
   cancel-in-progress: true
 
+#
 on:
   push:
     branches-ignore:
@@ -59,7 +60,7 @@ jobs:
     name: linux build test
     needs: check-files
     if: needs.check-files.outputs.should_skip != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.repository_owner == 'apache' && format('runs-on={0},family=m7a,cpu=16,image=ubuntu24-full-x64,extras=s3-cache,disk=large,tag=datafusion', github.run_id) || 'ubuntu-latest' }}
     container:
       image: amd64/rust
     steps:
