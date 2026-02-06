@@ -59,7 +59,7 @@ jobs:
     name: linux build test
     needs: check-files
     if: needs.check-files.outputs.should_skip != 'true'
-    runs-on: ${{ github.repository_owner == 'apache' && format('runs-on={0},family=m7a,cpu=8,image=ubuntu24-full-x64,extras=s3-cache,disk=large,tag=datafusion', github.run_id) || 'ubuntu-latest' }}
+    runs-on: ${{ github.repository_owner == 'apache' && format('runs-on={0}-{1},family=m7a,cpu=16,image=ubuntu24-full-x64,extras=s3-cache,disk=large,tag=datafusion', github.run_id,github.run_attempt) || 'ubuntu-latest' }}
     container:
       image: amd64/rust
     steps:
