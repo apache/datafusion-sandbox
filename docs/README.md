@@ -17,13 +17,13 @@
   under the License.
 -->
 
-# DataFusion Documentation
+# DataFusion Documentation.
 
 This folder contains the source content of the [User Guide](./source/user-guide)
 and [Contributor Guide](./source/contributor-guide). These are both published to
 https://datafusion.apache.org/ as part of the release process.
 
-## Dependencies
+## Dependencies (changed for testing)...
 
 It's recommended to install build dependencies and build the documentation
 inside a Python virtualenv.
