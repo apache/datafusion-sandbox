@@ -258,8 +258,8 @@ overflow-checks = false
 rpath = false
 strip = false            # Retain debug info for flamegraphs
 
-[profile.ci-dev] # todo: disable once https://github.com/apache/datafusion/pull/21085 is done
-inherits = "dev"
+[profile.ci-optimized]
+inherits = "release"
 codegen-units = 16
 lto = "thin"
 strip = true
