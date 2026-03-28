@@ -177,4 +177,4 @@ jobs:
           apt-get update && apt-get install -y protobuf-compiler
       - name: Run sqllogictest
         run: |
-          cargo test --features backtrace,parquet_encryption --profile ci-optimized --test sqllogictests -- --include-sqlite
+          cargo test --features backtrace,parquet_encryption --profile ci-dev --test sqllogictests -- --include-sqlite
