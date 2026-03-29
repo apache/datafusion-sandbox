@@ -44,4 +44,9 @@ github:
     main:
       required_pull_request_reviews:
         required_approving_review_count: 0
-
+      required_status_checks:
+        contexts:
+          - "Check License Header"
+          - "Use prettier to check formatting of documents"
+          - "Validate required_status_checks in .asf.yaml"
+          - "Spell Check with Typos"
