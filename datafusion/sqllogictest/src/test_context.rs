@@ -21,6 +21,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
+use std::vec;
 
 use arrow::array::{
     Array, ArrayRef, BinaryArray, Float64Array, Int32Array, LargeBinaryArray,
@@ -45,6 +46,7 @@ use datafusion::{
     datasource::{MemTable, TableProvider, TableType},
     prelude::{CsvReadOptions, SessionContext},
 };
+use datafusion_spark::SessionStateBuilderSpark;
 
 use crate::is_spark_path;
 use async_trait::async_trait;
@@ -80,25 +82,25 @@ impl TestContext {
             // hardcode target partitions so plans are deterministic
             .with_target_partitions(4);
         let runtime = Arc::new(RuntimeEnv::default());
-        let mut state = SessionStateBuilder::new()
+
+        let mut state_builder = SessionStateBuilder::new()
             .with_config(config)
             .with_runtime_env(runtime)
-            .with_default_features()
-            .build();
+            .with_default_features();
 
         if is_spark_path(relative_path) {
-            info!("Registering Spark functions");
-            datafusion_spark::register_all(&mut state)
-                .expect("Can not register Spark functions");
+            state_builder = state_builder.with_spark_features();
         }
+
+        let state = state_builder.build();
 
         let mut test_ctx = TestContext::new(SessionContext::new_with_state(state));
 
         let file_name = relative_path.file_name().unwrap().to_str().unwrap();
         match file_name {
-            "cte_quoted_reference.slt" => {
-                info!("Registering strict catalog provider for CTE tests");
-                register_strict_orders_catalog(test_ctx.session_ctx());
+            "cte.slt" => {
+                info!("Registering strict schema provider for CTE tests");
+                register_strict_schema_provider(test_ctx.session_ctx());
             }
             "information_schema_table_types.slt" => {
                 info!("Registering local temporary table");
@@ -176,10 +178,10 @@ impl TestContext {
 }
 
 // ==============================================================================
-// Strict Catalog / Schema Provider (sqllogictest-only)
+// Strict Schema Provider (sqllogictest-only)
 // ==============================================================================
 //
-// The goal of `cte_quoted_reference.slt` is to exercise end-to-end query planning
+// The goal of `StrictOrdersSchema` is to exercise end-to-end query planning
 // while detecting *unexpected* catalog lookups.
 //
 // Specifically, if DataFusion incorrectly treats a CTE reference (e.g. `"barbaz"`)
@@ -190,26 +192,6 @@ impl TestContext {
 // This makes the "extra provider lookup" bug observable in an end-to-end test,
 // rather than being silently ignored by default providers that return `Ok(None)`
 // for unknown tables.
-
-#[derive(Debug)]
-struct StrictOrdersCatalog {
-    schema: Arc<dyn SchemaProvider>,
-}
-
-impl CatalogProvider for StrictOrdersCatalog {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn schema_names(&self) -> Vec<String> {
-        vec!["public".to_string()]
-    }
-
-    fn schema(&self, name: &str) -> Option<Arc<dyn SchemaProvider>> {
-        (name == "public").then(|| Arc::clone(&self.schema))
-    }
-}
-
 #[derive(Debug)]
 struct StrictOrdersSchema {
     orders: Arc<dyn TableProvider>,
@@ -243,7 +225,7 @@ impl SchemaProvider for StrictOrdersSchema {
     }
 }
 
-fn register_strict_orders_catalog(ctx: &SessionContext) {
+fn register_strict_schema_provider(ctx: &SessionContext) {
     let schema = Arc::new(Schema::new(vec![Field::new(
         "order_id",
         DataType::Int32,
@@ -263,13 +245,14 @@ fn register_strict_orders_catalog(ctx: &SessionContext) {
         orders: Arc::new(orders),
     });
 
-    // Override the default "datafusion" catalog for this test file so that any
-    // unexpected lookup is caught immediately.
-    ctx.register_catalog(
-        "datafusion",
-        Arc::new(StrictOrdersCatalog {
-            schema: schema_provider,
-        }),
+    let previous = ctx
+        .catalog("datafusion")
+        .expect("default catalog should exist")
+        .register_schema("strict_schema", schema_provider)
+        .expect("strict schema registration should succeed");
+    assert!(
+        previous.is_none(),
+        "strict_schema unexpectedly already existed in datafusion catalog"
     );
 }
 
@@ -583,10 +566,6 @@ fn register_async_abs_udf(ctx: &SessionContext) {
         }
     }
     impl ScalarUDFImpl for AsyncAbs {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-
         fn name(&self) -> &str {
             "async_abs"
         }

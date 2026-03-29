@@ -45,8 +45,8 @@ use datafusion_expr::interval_arithmetic::Interval;
 use datafusion_expr::sort_properties::ExprProperties;
 use datafusion_expr::type_coercion::functions::fields_with_udf;
 use datafusion_expr::{
-    ColumnarValue, ReturnFieldArgs, ScalarFunctionArgs, ScalarUDF, Volatility,
-    expr_vec_fmt,
+    ColumnarValue, ExpressionPlacement, ReturnFieldArgs, ScalarFunctionArgs, ScalarUDF,
+    Volatility, expr_vec_fmt,
 };
 
 /// Physical expression of a scalar function
@@ -173,10 +173,7 @@ impl ScalarFunctionExpr {
     {
         match expr.as_any().downcast_ref::<ScalarFunctionExpr>() {
             Some(scalar_expr)
-                if scalar_expr
-                    .fun()
-                    .inner()
-                    .as_any()
+                if (scalar_expr.fun().inner().as_ref() as &dyn Any)
                     .downcast_ref::<T>()
                     .is_some() =>
             {
@@ -362,16 +359,21 @@ impl PhysicalExpr for ScalarFunctionExpr {
     fn is_volatile_node(&self) -> bool {
         self.fun.signature().volatility == Volatility::Volatile
     }
+
+    fn placement(&self) -> ExpressionPlacement {
+        let arg_placements: Vec<_> =
+            self.args.iter().map(|arg| arg.placement()).collect();
+        self.fun.placement(&arg_placements)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::expressions::Column;
-    use arrow::datatypes::{DataType, Field, Schema};
-    use datafusion_expr::{ScalarUDF, ScalarUDFImpl, Signature};
+    use arrow::datatypes::Field;
+    use datafusion_expr::{ScalarUDFImpl, Signature};
     use datafusion_physical_expr_common::physical_expr::is_volatile;
-    use std::any::Any;
 
     /// Test helper to create a mock UDF with a specific volatility
     #[derive(Debug, PartialEq, Eq, Hash)]
@@ -380,10 +382,6 @@ mod tests {
     }
 
     impl ScalarUDFImpl for MockScalarUDF {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-
         fn name(&self) -> &str {
             "mock_function"
         }

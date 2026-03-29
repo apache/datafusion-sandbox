@@ -15,12 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::any::Any;
 use std::sync::Arc;
 
 use arrow::array::{
     ArrayAccessor, ArrayIter, ArrayRef, ArrowPrimitiveType, AsArray, OffsetSizeTrait,
-    PrimitiveArray, new_null_array,
+    PrimitiveArray,
 };
 use arrow::datatypes::{ArrowNativeType, DataType, Int32Type, Int64Type};
 
@@ -81,10 +80,6 @@ impl FindInSetFunc {
 }
 
 impl ScalarUDFImpl for FindInSetFunc {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
     fn name(&self) -> &str {
         "find_in_set"
     }
@@ -98,9 +93,8 @@ impl ScalarUDFImpl for FindInSetFunc {
     }
 
     fn invoke_with_args(&self, args: ScalarFunctionArgs) -> Result<ColumnarValue> {
-        let ScalarFunctionArgs { args, .. } = args;
-
-        let [string, str_list] = take_function_args(self.name(), args)?;
+        let return_field = args.return_field;
+        let [string, str_list] = take_function_args(self.name(), args.args)?;
 
         match (string, str_list) {
             // both inputs are scalars
@@ -139,9 +133,11 @@ impl ScalarUDFImpl for FindInSetFunc {
                     | ScalarValue::LargeUtf8(str_list_literal),
                 ),
             ) => {
-                let result_array = match str_list_literal {
+                match str_list_literal {
                     // find_in_set(column_a, null) = null
-                    None => new_null_array(str_array.data_type(), str_array.len()),
+                    None => Ok(ColumnarValue::Scalar(ScalarValue::try_new_null(
+                        return_field.data_type(),
+                    )?)),
                     Some(str_list_literal) => {
                         let str_list = str_list_literal.split(',').collect::<Vec<&str>>();
                         let result = match str_array.data_type() {
@@ -172,10 +168,9 @@ impl ScalarUDFImpl for FindInSetFunc {
                                 )
                             }
                         };
-                        Arc::new(result?)
+                        Ok(ColumnarValue::Array(Arc::new(result?)))
                     }
-                };
-                Ok(ColumnarValue::Array(result_array))
+                }
             }
 
             // `string` is scalar, `str_list` is an array
@@ -187,11 +182,11 @@ impl ScalarUDFImpl for FindInSetFunc {
                 ),
                 ColumnarValue::Array(str_list_array),
             ) => {
-                let res = match string_literal {
+                match string_literal {
                     // find_in_set(null, column_b) = null
-                    None => {
-                        new_null_array(str_list_array.data_type(), str_list_array.len())
-                    }
+                    None => Ok(ColumnarValue::Scalar(ScalarValue::try_new_null(
+                        return_field.data_type(),
+                    )?)),
                     Some(string) => {
                         let result = match str_list_array.data_type() {
                             DataType::Utf8 => {
@@ -218,10 +213,9 @@ impl ScalarUDFImpl for FindInSetFunc {
                                 )
                             }
                         };
-                        Arc::new(result?)
+                        Ok(ColumnarValue::Array(Arc::new(result?)))
                     }
-                };
-                Ok(ColumnarValue::Array(res))
+                }
             }
 
             // both inputs are arrays

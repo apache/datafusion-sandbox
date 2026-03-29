@@ -743,12 +743,13 @@ impl SessionState {
         df_schema: &DFSchema,
     ) -> datafusion_common::Result<Arc<dyn PhysicalExpr>> {
         let config_options = self.config_options();
-        let simplify_context = SimplifyContext::default()
+        let simplify_context = SimplifyContext::builder()
             .with_schema(Arc::new(df_schema.clone()))
             .with_config_options(Arc::clone(config_options))
             .with_query_execution_start_time(
                 self.execution_props().query_execution_start_time,
-            );
+            )
+            .build();
         let simplifier = ExprSimplifier::new(simplify_context);
         // apply type coercion here to ensure types match
         let mut expr = simplifier.coerce(expr, df_schema)?;
@@ -878,11 +879,8 @@ impl SessionState {
         &self.catalog_list
     }
 
-    /// set the catalog list
-    pub(crate) fn register_catalog_list(
-        &mut self,
-        catalog_list: Arc<dyn CatalogProviderList>,
-    ) {
+    /// Set the catalog list
+    pub fn register_catalog_list(&mut self, catalog_list: Arc<dyn CatalogProviderList>) {
         self.catalog_list = catalog_list;
     }
 
@@ -972,6 +970,7 @@ impl SessionState {
 /// be used for all values unless explicitly provided.
 ///
 /// See example on [`SessionState`]
+#[derive(Clone)]
 pub struct SessionStateBuilder {
     session_id: Option<String>,
     analyzer: Option<Analyzer>,
@@ -1837,15 +1836,21 @@ impl ContextProvider for SessionContextProvider<'_> {
             .get(name)
             .cloned()
             .ok_or_else(|| plan_datafusion_err!("table function '{name}' not found"))?;
-        let simplify_context = SimplifyContext::default()
+        let simplify_context = SimplifyContext::builder()
             .with_config_options(Arc::clone(self.state.config_options()))
             .with_query_execution_start_time(
                 self.state.execution_props().query_execution_start_time,
-            );
+            )
+            .build();
         let simplifier = ExprSimplifier::new(simplify_context);
+        let schema = DFSchema::empty();
         let args = args
             .into_iter()
-            .map(|arg| simplifier.simplify(arg))
+            .map(|arg| {
+                simplifier
+                    .coerce(arg, &schema)
+                    .and_then(|e| simplifier.simplify(e))
+            })
             .collect::<datafusion_common::Result<Vec<_>>>()?;
         let provider = tbl_func.create_table_provider(&args)?;
 

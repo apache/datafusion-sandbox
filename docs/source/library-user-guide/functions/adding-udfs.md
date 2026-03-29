@@ -98,7 +98,6 @@ impl AddOne {
 
 /// Implement the ScalarUDFImpl trait for AddOne
 impl ScalarUDFImpl for AddOne {
-   fn as_any(&self) -> &dyn Any { self }
    fn name(&self) -> &str { "add_one" }
    fn signature(&self) -> &Signature { &self.signature }
    fn return_type(&self, args: &[DataType]) -> Result<DataType> {
@@ -161,7 +160,6 @@ We now need to register the function with DataFusion so that it can be used in t
 #
 # /// Implement the ScalarUDFImpl trait for AddOne
 # impl ScalarUDFImpl for AddOne {
-#    fn as_any(&self) -> &dyn Any { self }
 #    fn name(&self) -> &str { "add_one" }
 #    fn signature(&self) -> &Signature { &self.signature }
 #    fn return_type(&self, args: &[DataType]) -> Result<DataType> {
@@ -411,10 +409,6 @@ impl AsyncUpper {
 /// Implement the normal ScalarUDFImpl trait for AsyncUpper
 #[async_trait]
 impl ScalarUDFImpl for AsyncUpper {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
     fn name(&self) -> &str {
         "async_upper"
     }
@@ -514,10 +508,6 @@ We can now transfer the async UDF into the normal scalar using `into_scalar_udf`
 #
 # #[async_trait]
 # impl ScalarUDFImpl for AsyncUpper {
-#     fn as_any(&self) -> &dyn Any {
-#         self
-#     }
-#
 #     fn name(&self) -> &str {
 #         "async_upper"
 #     }
@@ -583,7 +573,6 @@ For async UDF implementation details, see [`async_udf.rs`](https://github.com/ap
 
 [`scalarudf`]: https://docs.rs/datafusion/latest/datafusion/logical_expr/struct.ScalarUDF.html
 [`create_udf`]: https://docs.rs/datafusion/latest/datafusion/logical_expr/fn.create_udf.html
-[`process_scalar_func_inputs`]: https://docs.rs/datafusion/latest/datafusion/physical_expr/functions/fn.process_scalar_func_inputs.html
 [`advanced_udf.rs`]: https://github.com/apache/datafusion/blob/main/datafusion-examples/examples/udf/advanced_udf.rs
 
 ## Named Arguments
@@ -642,7 +631,6 @@ impl PowerFunction {
 }
 
 impl ScalarUDFImpl for PowerFunction {
-    fn as_any(&self) -> &dyn Any { self }
     fn name(&self) -> &str { "power" }
     fn signature(&self) -> &Signature { &self.signature }
 
@@ -683,6 +671,10 @@ No function matches the given name and argument types substr(Utf8).
 
 Scalar UDFs are functions that take a row of data and return a single value. Window UDFs are similar, but they also have
 access to the rows around them. Access to the proximal rows is helpful, but adds some complexity to the implementation.
+
+For background and other considerations, see the [User defined Window Functions in DataFusion] blog.
+
+[user defined window functions in datafusion]: https://datafusion.apache.org/blog/2025/04/19/user-defined-window-functions
 
 For example, we will declare a user defined window function that computes a moving average.
 

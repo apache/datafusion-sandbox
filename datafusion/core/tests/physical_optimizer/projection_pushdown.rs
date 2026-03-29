@@ -15,7 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::any::Any;
 use std::sync::Arc;
 
 use arrow::compute::SortOptions;
@@ -79,10 +78,6 @@ impl DummyUDF {
 }
 
 impl ScalarUDFImpl for DummyUDF {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
     fn name(&self) -> &str {
         "dummy_udf"
     }
@@ -1718,6 +1713,50 @@ fn test_cooperative_exec_after_projection() -> Result<()> {
         @r"
     CooperativeExec
       DataSourceExec: file_groups={1 group: [[x]]}, projection=[a, b], file_type=csv, has_header=false
+    "
+    );
+
+    Ok(())
+}
+
+#[test]
+fn test_hash_join_empty_projection_embeds() -> Result<()> {
+    let left_csv = create_simple_csv_exec();
+    let right_csv = create_simple_csv_exec();
+
+    let join = Arc::new(HashJoinExec::try_new(
+        left_csv,
+        right_csv,
+        vec![(Arc::new(Column::new("a", 0)), Arc::new(Column::new("a", 0)))],
+        None,
+        &JoinType::Right,
+        None,
+        PartitionMode::CollectLeft,
+        NullEquality::NullEqualsNothing,
+        false,
+    )?);
+
+    // Empty projection: no columns needed from the join output
+    let projection: Arc<dyn ExecutionPlan> = Arc::new(ProjectionExec::try_new(
+        vec![] as Vec<ProjectionExpr>,
+        join,
+    )?);
+
+    let after_optimize =
+        ProjectionPushdown::new().optimize(projection, &ConfigOptions::new())?;
+    let after_optimize_string = displayable(after_optimize.as_ref())
+        .indent(true)
+        .to_string();
+    let actual = after_optimize_string.trim();
+
+    // The empty projection should be embedded into the HashJoinExec,
+    // resulting in projection=[] on the join and no ProjectionExec wrapper.
+    assert_snapshot!(
+        actual,
+        @r"
+    HashJoinExec: mode=CollectLeft, join_type=Right, on=[(a@0, a@0)], projection=[]
+      DataSourceExec: file_groups={1 group: [[x]]}, projection=[a, b, c, d, e], file_type=csv, has_header=false
+      DataSourceExec: file_groups={1 group: [[x]]}, projection=[a, b, c, d, e], file_type=csv, has_header=false
     "
     );
 
